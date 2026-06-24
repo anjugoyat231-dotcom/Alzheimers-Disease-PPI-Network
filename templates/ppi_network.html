@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}PPI Network - AD PPI Network Analysis{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <h2 class="text-primary"><i class="bi bi-diagram-3"></i> Protein-Protein Interaction Network Analysis</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Network Parameters</h5>
+            </div>
+            <div class="card-body">
+                <form id="ppiForm">
+                    <div class="mb-3">
+                        <label class="form-label">Score Threshold</label>
+                        <input type="number" class="form-control" name="score_threshold"
+                               id="score_threshold" value="0.4" step="0.1" min="0" max="1">
+                        <small class="text-muted">Minimum STRING interaction confidence score</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">STRING Interactions File (optional)</label>
+                        <input type="file" class="form-control" name="interactions_file"
+                               id="interactions_file" accept=".csv,.tsv">
+                        <small class="text-muted">Upload STRING export file for known interactions</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="ppiBtn">
+                        <i class="bi bi-diagram-3"></i> Build PPI Network
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {% if session_data.ppi_analyzed %}
+        <div class="card shadow mt-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-download"></i> Export Options</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/api/export/centrality" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-table"></i> Download Centrality Results (CSV)
+                    </a>
+                    <a href="/api/export/cytoscape" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-share"></i> Export for Cytoscape (CSV)
+                    </a>
+                    <a href="/api/export/network" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-file-earmark"></i> Export GraphML
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-clipboard-data"></i> Network Statistics</h5>
+            </div>
+            <div class="card-body" id="statsArea">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-diagram-3 display-1"></i>
+                    <p class="mt-2">Configure parameters and build the PPI network</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3 g-3">
+            <div class="col-md-6">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-image"></i> PPI Network Graph</h5>
+                    </div>
+                    <div class="card-body text-center" id="networkArea">
+                        <div class="text-muted py-3">
+                            <i class="bi bi-diagram-3 display-4"></i>
+                            <p class="mt-2">Network visualization appears here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-warning text-white">
+                        <h5 class="mb-0"><i class="bi bi-star"></i> Top Hub Genes</h5>
+                    </div>
+                    <div class="card-body" id="hubArea">
+                        <div class="text-muted py-3 text-center">
+                            <p>Top 10 hub genes appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if session_data.ppi_analyzed %}
+        <div class="d-grid gap-2 mt-3">
+            <a href="{{ url_for('enrichment') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-arrow-right"></i> Proceed to Enrichment Analysis
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#ppiForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('score_threshold', $('#score_threshold').val());
+        if ($('#interactions_file')[0].files[0]) {
+            formData.append('interactions_file', $('#interactions_file')[0].files[0]);
+        }
+        $('#ppiBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Building Network...');
+        $.ajax({
+            url: '/ppi_network',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                score_threshold: parseFloat($('#score_threshold').val())
+            }),
+            success: function(resp) {
+                $('#ppiBtn').prop('disabled', false).html('<i class="bi bi-diagram-3"></i> Build PPI Network');
+                if (resp.success) {
+                    const ns = resp.network_stats;
+                    let html = '<h6 class="text-success"><i class="bi bi-check-circle"></i> Network Built Successfully</h6>';
+                    html += '<div class="row g-2 mt-2">';
+                    html += '<div class="col-4"><div class="card bg-light text-center p-2"><small>Nodes (Genes)</small><strong>' + ns.nodes + '</strong></div></div>';
+                    html += '<div class="col-4"><div class="card bg-light text-center p-2"><small>Edges</small><strong>' + ns.edges + '</strong></div></div>';
+                    html += '<div class="col-4"><div class="card bg-light text-center p-2"><small>Density</small><strong>' + ns.density + '</strong></div></div>';
+                    html += '<div class="col-4 mt-2"><div class="card bg-light text-center p-2"><small>Avg Degree</small><strong>' + ns.avg_degree + '</strong></div></div>';
+                    html += '<div class="col-4 mt-2"><div class="card bg-light text-center p-2"><small>Components</small><strong>' + ns.components + '</strong></div></div>';
+                    html += '<div class="col-4 mt-2"><div class="card bg-light text-center p-2"><small>Avg Clustering</small><strong>' + ns.avg_clustering + '</strong></div></div>';
+                    html += '</div>';
+                    html += '<hr><p>Analyzed ' + resp.total_genes_analyzed + ' significant genes</p>';
+                    $('#statsArea').html(html);
+
+                    let hubHtml = '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Rank</th><th>Gene</th><th>Degree</th><th>Closeness</th><th>Betweenness</th><th>MCC</th></tr></thead><tbody>';
+                    resp.hub_genes.forEach(function(g, i) {
+                        hubHtml += '<tr><td>' + (i+1) + '</td><td><strong>' + g.gene + '</strong></td><td>' + g.degree + '</td><td>' + g.closeness + '</td><td>' + g.betweenness + '</td><td>' + g.mcc + '</td></tr>';
+                    });
+                    hubHtml += '</tbody></table></div>';
+                    $('#hubArea').html(hubHtml);
+
+                    $('#networkArea').html('<div class="alert alert-success">PPI Network graph generated! <a href="/static/images/ppi_network.png" target="_blank">View full size</a></div><img src="/static/images/ppi_network.png" class="img-fluid rounded" alt="PPI Network">');
+                    location.reload();
+                } else {
+                    $('#statsArea').html('<div class="alert alert-danger">' + resp.error + '</div>');
+                }
+            },
+            error: function(xhr) {
+                $('#ppiBtn').prop('disabled', false).html('<i class="bi bi-diagram-3"></i> Build PPI Network');
+                const err = xhr.responseJSON?.error || 'PPI Analysis failed';
+                $('#statsArea').html('<div class="alert alert-danger">' + err + '</div>');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

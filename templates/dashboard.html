@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - AD PPI Network Analysis{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <h2 class="text-primary"><i class="bi bi-speedometer2"></i> Research Dashboard</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row g-3" id="kpiCards">
+    <div class="col-md-3 col-6">
+        <div class="card shadow border-primary h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-gene display-6 text-primary"></i>
+                <h3 class="mt-2" id="totalGenes">-</h3>
+                <small class="text-muted">Total Genes</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card shadow border-success h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-star display-6 text-success"></i>
+                <h3 class="mt-2" id="sigGenes">-</h3>
+                <small class="text-muted">Significant Genes</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card shadow border-danger h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-arrow-up display-6 text-danger"></i>
+                <h3 class="mt-2" id="upGenes">-</h3>
+                <small class="text-muted">Upregulated</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card shadow border-info h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-arrow-down display-6 text-info"></i>
+                <h3 class="mt-2" id="downGenes">-</h3>
+                <small class="text-muted">Downregulated</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-2">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Differential Expression Summary</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="deChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-star"></i> Top Hub Genes</h5>
+            </div>
+            <div class="card-body" id="hubGenesList">
+                <div class="text-muted text-center py-4">
+                    <i class="bi bi-star display-4"></i>
+                    <p class="mt-2">Hub gene data not available</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-2">
+    <div class="col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Hub Gene Centrality Comparison</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="hubChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="bi bi-collection"></i> GO Enrichment (-Log10 P-value)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="goChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-2">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-search"></i> Gene Search</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="geneSearch"
+                                   placeholder="Search for a gene (e.g., APP, MAPT, APOE)">
+                            <button class="btn btn-primary" id="searchBtn">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2">
+                            <a href="/api/export/de_results" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-download"></i> DE Results
+                            </a>
+                            <a href="/api/export/significant_genes" class="btn btn-outline-success btn-sm">
+                                <i class="bi bi-download"></i> Significant Genes
+                            </a>
+                            <a href="/api/download_report" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-file-pdf"></i> Latest Report
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div id="searchResults" class="mt-3"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-2">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-image"></i> Analysis Visualizations</h5>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="vizTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="volcano-tab" data-bs-toggle="tab"
+                                data-bs-target="#volcano" type="button" role="tab">
+                            Volcano Plot
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="ppi-tab" data-bs-toggle="tab"
+                                data-bs-target="#ppi" type="button" role="tab">
+                            PPI Network
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="hubplot-tab" data-bs-toggle="tab"
+                                data-bs-target="#hubplot" type="button" role="tab">
+                            Hub Genes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="kegg-tab" data-bs-toggle="tab"
+                                data-bs-target="#kegg" type="button" role="tab">
+                            KEGG Pathway
+                        </button>
+                    </li>
+                </ul>
+                <div class="tab-content mt-3" id="vizTabContent">
+                    <div class="tab-pane fade show active" id="volcano" role="tabpanel">
+                        <div class="text-center">
+                            {% if session_data.de_analyzed %}
+                            <img src="/static/images/volcano_plot.png" class="img-fluid rounded" alt="Volcano Plot"
+                                 onerror="this.parentElement.innerHTML='<div class=\'alert alert-warning\'>Volcano plot not yet generated. Run DE analysis first.</div>'">
+                            {% else %}
+                            <div class="alert alert-info">Run DE Analysis to generate volcano plot</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="ppi" role="tabpanel">
+                        <div class="text-center">
+                            {% if session_data.ppi_analyzed %}
+                            <img src="/static/images/ppi_network.png" class="img-fluid rounded" alt="PPI Network"
+                                 onerror="this.parentElement.innerHTML='<div class=\'alert alert-warning\'>PPI network not yet generated.</div>'">
+                            {% else %}
+                            <div class="alert alert-info">Run PPI Analysis to generate network graph</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="hubplot" role="tabpanel">
+                        <div class="text-center">
+                            {% if session_data.ppi_analyzed %}
+                            <img src="/static/images/hub_genes_barplot.png" class="img-fluid rounded" alt="Hub Genes"
+                                 onerror="this.parentElement.innerHTML='<div class=\'alert alert-warning\'>Hub gene plot not yet generated.</div>'">
+                            {% else %}
+                            <div class="alert alert-info">Run PPI Analysis to generate hub gene plot</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="kegg" role="tabpanel">
+                        <div class="text-center">
+                            {% if session_data.enrichment_done %}
+                            <img src="/static/images/kegg_enrichment.png" class="img-fluid rounded" alt="KEGG Enrichment"
+                                 onerror="this.parentElement.innerHTML='<div class=\'alert alert-warning\'>KEGG enrichment plot not yet generated.</div>'">
+                            {% else %}
+                            <div class="alert alert-info">Run Enrichment Analysis to generate KEGG plot</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function updateDashboard() {
+        $.get('/api/chart_data/de_summary', function(data) {
+            if (data && Object.keys(data).length) {
+                $('#totalGenes').text(
+                    (data.upregulated || 0) + (data.downregulated || 0) + (data.not_significant || 0)
+                );
+                $('#sigGenes').text((data.upregulated || 0) + (data.downregulated || 0));
+                $('#upGenes').text(data.upregulated || 0);
+                $('#downGenes').text(data.downregulated || 0);
+
+                new Chart(document.getElementById('deChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Upregulated', 'Downregulated', 'Not Significant'],
+                        datasets: [{
+                            data: [data.upregulated, data.downregulated, data.not_significant],
+                            backgroundColor: ['#dc3545', '#0d6efd', '#6c757d'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
+                    }
+                });
+            }
+        });
+
+        $.get('/api/chart_data/hub_genes', function(data) {
+            if (data && data.genes && data.genes.length) {
+                let html = '<div class="table-responsive"><table class="table table-sm"><thead><tr><th>#</th><th>Gene</th><th>Degree</th></tr></thead><tbody>';
+                data.genes.forEach(function(g, i) {
+                    html += '<tr><td>' + (i+1) + '</td><td><strong>' + g + '</strong></td><td>' + data.degree[i] + '</td></tr>';
+                });
+                html += '</tbody></table></div>';
+                $('#hubGenesList').html(html);
+
+                new Chart(document.getElementById('hubChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.genes,
+                        datasets: [
+                            { label: 'Degree', data: data.degree, backgroundColor: '#dc3545' },
+                            { label: 'Closeness', data: data.closeness, backgroundColor: '#0d6efd' },
+                            { label: 'Betweenness', data: data.betweenness, backgroundColor: '#198754' }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { ticks: { font: { size: 9 } } },
+                            y: { beginAtZero: true }
+                        },
+                        plugins: { legend: { position: 'bottom', labels: { font: { size: 10 } } } }
+                    }
+                });
+            }
+        });
+
+        $.get('/api/chart_data/go_enrichment', function(data) {
+            if (data && data.BP) {
+                new Chart(document.getElementById('goChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: data.BP.terms.slice(0, 8),
+                        datasets: [{
+                            label: '-Log10 Adjusted P',
+                            data: data.BP.neg_log10_p.slice(0, 8),
+                            backgroundColor: '#20c997'
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        scales: {
+                            x: { beginAtZero: true },
+                            y: { ticks: { font: { size: 8 } } }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        });
+    }
+
+    updateDashboard();
+
+    $('#searchBtn').on('click', function() {
+        const query = $('#geneSearch').val();
+        if (!query) return;
+        $.get('/api/gene_search?q=' + encodeURIComponent(query), function(data) {
+            if (data.length) {
+                let html = '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Gene</th><th>Log2 FC</th><th>Adj. P</th><th>Regulation</th></tr></thead><tbody>';
+                data.forEach(function(g) {
+                    const cls = g.regulation === 'Upregulated' ? 'text-danger' : (g.regulation === 'Downregulated' ? 'text-primary' : '');
+                    html += '<tr><td><strong>' + g.gene + '</strong></td><td>' + g.log2_fc + '</td><td>' + g.p_adj + '</td><td class="' + cls + '">' + g.regulation + '</td></tr>';
+                });
+                html += '</tbody></table></div>';
+                $('#searchResults').html(html);
+            } else {
+                $('#searchResults').html('<div class="alert alert-info">No matching genes found</div>');
+            }
+        });
+    });
+
+    $('#geneSearch').on('keypress', function(e) {
+        if (e.which === 13) $('#searchBtn').click();
+    });
+});
+</script>
+{% endblock %}

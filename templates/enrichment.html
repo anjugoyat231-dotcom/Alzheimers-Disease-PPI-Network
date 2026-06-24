@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Enrichment - AD PPI Network Analysis{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <h2 class="text-primary"><i class="bi bi-collection"></i> Gene Ontology & KEGG Pathway Enrichment</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-12">
+        <div class="d-grid gap-2 mb-3">
+            <button class="btn btn-primary btn-lg" id="runEnrichmentBtn">
+                <i class="bi bi-play-circle"></i> Run Enrichment Analysis
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-diagram-2"></i> GO - Biological Process</h5>
+            </div>
+            <div class="card-body" id="goBpArea">
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-diagram-2 display-4"></i>
+                    <p class="mt-2">Run enrichment to see GO BP results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-molecule"></i> GO - Molecular Function</h5>
+            </div>
+            <div class="card-body" id="goMfArea">
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-molecule display-4"></i>
+                    <p class="mt-2">Run enrichment to see GO MF results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow h-100">
+            <div class="card-header bg-warning text-white">
+                <h5 class="mb-0"><i class="bi bi-box"></i> GO - Cellular Component</h5>
+            </div>
+            <div class="card-body" id="goCcArea">
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-box display-4"></i>
+                    <p class="mt-2">Run enrichment to see GO CC results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 g-4">
+    <div class="col-lg-6">
+        <div class="card shadow h-100">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-signpost-2"></i> KEGG Pathway Analysis</h5>
+            </div>
+            <div class="card-body" id="keggArea">
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-signpost-2 display-4"></i>
+                    <p class="mt-2">Run enrichment to see KEGG pathway results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow h-100">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-pie-chart"></i> Enrichment Summary</h5>
+            </div>
+            <div class="card-body" id="summaryArea">
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-pie-chart display-4"></i>
+                    <p class="mt-2">Summary statistics appear here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        {% if session_data.enrichment_done %}
+        <div class="d-grid gap-2">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-speedometer2"></i> View Complete Dashboard
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    function renderTable(data, limit) {
+        if (!data || data.length === 0) return '<div class="alert alert-info">No enriched terms found</div>';
+        const rows = data.slice(0, limit || data.length);
+        let html = '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr><th>Term</th><th>Overlap</th><th>P-value</th><th>Adj. P</th></tr></thead><tbody>';
+        rows.forEach(function(r) {
+            html += '<tr><td><small>' + r.term + '</small></td><td>' + r.overlap + '</td><td>' + r.p_value + '</td><td>' + (r.p_adjusted || r.p_value) + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        return html;
+    }
+
+    $('#runEnrichmentBtn').on('click', function() {
+        const btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Running Enrichment Analysis...');
+        $.ajax({
+            url: '/enrichment',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({}),
+            success: function(resp) {
+                btn.prop('disabled', false).html('<i class="bi bi-play-circle"></i> Run Enrichment Analysis');
+                if (resp.success) {
+                    $('#goBpArea').html('<h6 class="text-success">Biological Process</h6>' + renderTable(resp.go_bp, 8));
+                    $('#goMfArea').html('<h6 class="text-success">Molecular Function</h6>' + renderTable(resp.go_mf, 8));
+                    $('#goCcArea').html('<h6 class="text-success">Cellular Component</h6>' + renderTable(resp.go_cc, 8));
+                    $('#keggArea').html('<h6 class="text-success">KEGG Pathways</h6>' + renderTable(resp.kegg, 10));
+
+                    if (resp.summary) {
+                        let s = resp.summary;
+                        let html = '<h6 class="text-success"><i class="bi bi-check-circle"></i> Enrichment Complete</h6>';
+                        html += '<table class="table table-sm">';
+                        if (s.go_bp_terms) html += '<tr><td>GO BP Terms</td><td>' + s.go_bp_terms + '</td><td>Significant: ' + s.go_bp_significant + '</td></tr>';
+                        if (s.go_mf_terms) html += '<tr><td>GO MF Terms</td><td>' + s.go_mf_terms + '</td><td>Significant: ' + s.go_mf_significant + '</td></tr>';
+                        if (s.go_cc_terms) html += '<tr><td>GO CC Terms</td><td>' + s.go_cc_terms + '</td><td>Significant: ' + s.go_cc_significant + '</td></tr>';
+                        if (s.kegg_pathways) html += '<tr><td>KEGG Pathways</td><td>' + s.kegg_pathways + '</td><td>Significant: ' + s.kegg_significant + '</td></tr>';
+                        html += '</table>';
+                        $('#summaryArea').html(html);
+                    }
+                    location.reload();
+                } else {
+                    $('#summaryArea').html('<div class="alert alert-danger">' + resp.error + '</div>');
+                }
+            },
+            error: function(xhr) {
+                btn.prop('disabled', false).html('<i class="bi bi-play-circle"></i> Run Enrichment Analysis');
+                $('#summaryArea').html('<div class="alert alert-danger">Enrichment analysis failed</div>');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

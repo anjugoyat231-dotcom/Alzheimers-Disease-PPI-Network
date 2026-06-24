@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AD PPI Network Analysis{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-dna"></i> AD PPI Network Analyzer
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav" aria-controls="navbarNav"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'index' %}active{% endif %}"
+                           href="{{ url_for('index') }}">
+                            <i class="bi bi-house"></i> Home
+                        </a>
+                    </li>
+                    {% if session_data.dataset_loaded %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint in ['upload', 'preprocess'] %}active{% endif %}"
+                           href="{{ url_for('upload') }}">
+                            <i class="bi bi-upload"></i> Data
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'differential_expression' %}active{% endif %}"
+                           href="{{ url_for('differential_expression') }}">
+                            <i class="bi bi-graph-up"></i> DE Analysis
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'ppi_network' %}active{% endif %}"
+                           href="{{ url_for('ppi_network') }}">
+                            <i class="bi bi-diagram-3"></i> PPI Network
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'enrichment' %}active{% endif %}"
+                           href="{{ url_for('enrichment') }}">
+                            <i class="bi bi-collection"></i> Enrichment
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"
+                           href="{{ url_for('dashboard') }}">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'report' %}active{% endif %}"
+                           href="{{ url_for('report') }}">
+                            <i class="bi bi-file-pdf"></i> Report
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <span class="navbar-text">
+                    <span id="analysis-progress" class="badge bg-light text-dark">
+                        Pipeline Status
+                    </span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4 pt-4">
+        <div class="row">
+            {% if session_data.dataset_loaded %}
+            <div class="col-md-2 d-none d-md-block">
+                <div class="card sidebar-card mt-3">
+                    <div class="card-header bg-primary text-white">
+                        <small><i class="bi bi-pie-chart"></i> Pipeline Status</small>
+                    </div>
+                    <div class="card-body p-2">
+                        <ul class="list-unstyled mb-0">
+                            <li class="py-1 {% if session_data.dataset_loaded %}text-success{% else %}text-muted{% endif %}">
+                                <i class="bi {% if session_data.dataset_loaded %}bi-check-circle{% else %}bi-circle{% endif %}"></i>
+                                <small>Data Uploaded</small>
+                            </li>
+                            <li class="py-1 {% if session_data.preprocessed %}text-success{% else %}text-muted{% endif %}">
+                                <i class="bi {% if session_data.preprocessed %}bi-check-circle{% else %}bi-circle{% endif %}"></i>
+                                <small>Preprocessed</small>
+                            </li>
+                            <li class="py-1 {% if session_data.de_analyzed %}text-success{% else %}text-muted{% endif %}">
+                                <i class="bi {% if session_data.de_analyzed %}bi-check-circle{% else %}bi-circle{% endif %}"></i>
+                                <small>DE Analyzed</small>
+                            </li>
+                            <li class="py-1 {% if session_data.ppi_analyzed %}text-success{% else %}text-muted{% endif %}">
+                                <i class="bi {% if session_data.ppi_analyzed %}bi-check-circle{% else %}bi-circle{% endif %}"></i>
+                                <small>PPI Analyzed</small>
+                            </li>
+                            <li class="py-1 {% if session_data.enrichment_done %}text-success{% else %}text-muted{% endif %}">
+                                <i class="bi {% if session_data.enrichment_done %}bi-check-circle{% else %}bi-circle{% endif %}"></i>
+                                <small>Enrichment Done</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-10">
+            {% else %}
+            <div class="col-12">
+            {% endif %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-5 py-3 bg-light">
+        <div class="container text-center">
+            <small class="text-muted">
+                AI-Assisted PPI Network Analysis for Alzheimer's Disease &copy; 2024
+            </small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

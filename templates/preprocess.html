@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Preprocessing - AD PPI Network Analysis{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <h2 class="text-primary"><i class="bi bi-sliders"></i> Data Preprocessing</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-tools"></i> Preprocessing Parameters</h5>
+            </div>
+            <div class="card-body">
+                <form id="preprocessForm">
+                    <div class="mb-3">
+                        <label class="form-label">Missing Value Strategy</label>
+                        <select class="form-select" name="missing_strategy" id="missing_strategy">
+                            <option value="mean">Mean Imputation</option>
+                            <option value="median">Median Imputation</option>
+                            <option value="zero">Fill with Zero</option>
+                            <option value="drop">Drop Missing Rows</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Min Expression Threshold</label>
+                        <input type="number" class="form-control" name="min_expression"
+                               id="min_expression" value="1.0" step="0.1" min="0">
+                        <small class="text-muted">Genes with mean expression below this value are filtered</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Min Sample Fraction</label>
+                        <input type="number" class="form-control" name="min_samples"
+                               id="min_samples" value="0.5" step="0.1" min="0" max="1">
+                        <small class="text-muted">Minimum fraction of samples a gene must be expressed in</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Normalization Method</label>
+                        <select class="form-select" name="normalization" id="normalization">
+                            <option value="log2">Log2 Transformation</option>
+                            <option value="quantile">Quantile Normalization</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Scaling Method</label>
+                        <select class="form-select" name="scaling" id="scaling">
+                            <option value="standard">Standard Scaling (Z-score)</option>
+                            <option value="minmax">Min-Max Scaling</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="preprocessBtn">
+                        <i class="bi bi-play-circle"></i> Run Preprocessing
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-clipboard-data"></i> Preprocessing Summary</h5>
+            </div>
+            <div class="card-body" id="summaryArea">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-sliders display-1"></i>
+                    <p class="mt-2">Configure parameters and run preprocessing</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mt-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-image"></i> Visualization Preview</h5>
+            </div>
+            <div class="card-body text-center" id="vizArea">
+                <div class="text-muted py-3">
+                    <p>Plots will appear after preprocessing completes</p>
+                </div>
+            </div>
+        </div>
+
+        {% if session_data.preprocessed %}
+        <div class="d-grid gap-2 mt-3">
+            <a href="{{ url_for('differential_expression') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-arrow-right"></i> Proceed to Differential Expression Analysis
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#preprocessForm').on('submit', function(e) {
+        e.preventDefault();
+        const data = {
+            missing_strategy: $('#missing_strategy').val(),
+            min_expression: parseFloat($('#min_expression').val()),
+            min_samples: parseFloat($('#min_samples').val()),
+            normalization: $('#normalization').val(),
+            scaling: $('#scaling').val()
+        };
+        $('#preprocessBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing...');
+        $.ajax({
+            url: '/preprocess',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(resp) {
+                $('#preprocessBtn').prop('disabled', false).html('<i class="bi bi-play-circle"></i> Run Preprocessing');
+                if (resp.success) {
+                    const s = resp.summary;
+                    let html = '<h6 class="text-success"><i class="bi bi-check-circle"></i> Preprocessing Complete</h6>';
+                    html += '<table class="table table-sm">';
+                    html += '<tr><td>Original Genes</td><td>' + s.original_genes + '</td></tr>';
+                    html += '<tr><td>Original Samples</td><td>' + s.original_samples + '</td></tr>';
+                    html += '<tr><td>Missing Values (before)</td><td>' + s.missing_before + '</td></tr>';
+                    html += '<tr><td>Missing Values (after)</td><td>' + s.missing_after + '</td></tr>';
+                    html += '<tr><td>Genes Filtered Out</td><td>' + s.genes_filtered_out + '</td></tr>';
+                    html += '<tr><td>Final Genes</td><td>' + s.final_genes + '</td></tr>';
+                    html += '<tr><td>Normalization</td><td>' + s.normalization_method + '</td></tr>';
+                    html += '<tr><td>Scaling</td><td>' + s.scaling_method + '</td></tr>';
+                    html += '</table>';
+                    $('#summaryArea').html(html);
+                    $('#vizArea').html('<div class="alert alert-info">Plots generated. Proceed to next step.</div>');
+                    location.reload();
+                } else {
+                    $('#summaryArea').html('<div class="alert alert-danger">' + resp.error + '</div>');
+                }
+            },
+            error: function(xhr) {
+                $('#preprocessBtn').prop('disabled', false).html('<i class="bi bi-play-circle"></i> Run Preprocessing');
+                const err = xhr.responseJSON?.error || 'Processing failed';
+                $('#summaryArea').html('<div class="alert alert-danger">' + err + '</div>');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

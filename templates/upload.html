@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Data Upload - AD PPI Network Analysis{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <h2 class="text-primary"><i class="bi bi-upload"></i> Dataset Management</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-file-earmark-arrow-up"></i> Upload GEO Dataset</h5>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Select CSV/TSV File</label>
+                        <input type="file" class="form-control" name="file"
+                               accept=".csv,.tsv,.txt,.gz" id="fileInput">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">File Format Guide</label>
+                        <ul class="small text-muted">
+                            <li>Rows = Genes, Columns = Samples</li>
+                            <li>First column should contain gene symbols</li>
+                            <li>Sample columns named with condition e.g. AD_1, Control_1</li>
+                        </ul>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="uploadBtn">
+                        <i class="bi bi-cloud-upload"></i> Upload & Validate
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {% if session_data.dataset_loaded %}
+        <div class="card shadow mt-3">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-check-circle"></i> Dataset Loaded</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-1"><strong>Current file:</strong> <br>
+                    <small class="text-break">{{ session_data.current_file }}</small></p>
+                <div class="d-grid gap-2 mt-2">
+                    <a href="{{ url_for('preprocess') }}" class="btn btn-success">
+                        <i class="bi bi-arrow-right"></i> Proceed to Preprocessing
+                    </a>
+                    <button class="btn btn-outline-danger btn-sm" id="resetBtn">
+                        <i class="bi bi-trash"></i> Reset Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card shadow">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-eye"></i> Data Preview</h5>
+            </div>
+            <div class="card-body" id="previewArea">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-file-earmark-text display-1"></i>
+                    <p class="mt-2">Upload a dataset to see preview</p>
+                    <p class="small">Example datasets are available in the <code>data/raw/</code> directory</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow mt-3">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> Data Validation</h5>
+            </div>
+            <div class="card-body" id="validationArea">
+                <div class="text-center text-muted py-3">
+                    <p>File validation results will appear here after upload</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="bi bi-question-circle"></i> GEO Dataset Format</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Recommended GEO Datasets for Alzheimer's Disease:</strong></p>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>GEO ID</th>
+                                <th>Description</th>
+                                <th>Samples</th>
+                                <th>Tissue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>GSE5281</td><td>AD vs Control, Entorhinal Cortex</td><td>87</td><td>Brain</td></tr>
+                            <tr><td>GSE36980</td><td>AD vs Control, Hippocampus</td><td>26</td><td>Brain</td></tr>
+                            <tr><td>GSE33000</td><td>AD vs Control, Prefrontal Cortex</td><td>310</td><td>Brain</td></tr>
+                            <tr><td>GSE97760</td><td>AD vs Control, Multiple Brain Regions</td><td>47</td><td>Brain</td></tr>
+                            <tr><td>GSE132903</td><td>AD vs Control, Prefrontal Cortex</td><td>97</td><td>Brain</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#uploadForm').on('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        $('#uploadBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Uploading...');
+        $.ajax({
+            url: '/upload',
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(resp) {
+                $('#uploadBtn').prop('disabled', false).html('<i class="bi bi-cloud-upload"></i> Upload & Validate');
+                if (resp.success) {
+                    $('#previewArea').html(`
+                        <h6 class="text-success">Upload Successful!</h6>
+                        <p><strong>File:</strong> ${resp.filename}</p>
+                        <p><strong>Dimensions:</strong> ${resp.rows} genes x ${resp.cols} samples</p>
+                        <p><strong>Columns:</strong> ${resp.columns.join(', ')}</p>
+                        <hr>
+                        <h6>Data Preview (first 10 rows):</h6>
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            ${resp.preview}
+                        </div>
+                    `);
+                    $('#validationArea').html(`
+                        <div class="alert alert-success mb-0">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Validation Passed:</strong> Dataset has ${resp.rows} genes and ${resp.cols} samples.
+                            No formatting issues detected.
+                        </div>
+                    `);
+                    location.reload();
+                } else {
+                    $('#validationArea').html(`
+                        <div class="alert alert-danger mb-0">
+                            <i class="bi bi-exclamation-triangle"></i> ${resp.error}
+                        </div>
+                    `);
+                }
+            },
+            error: function(xhr) {
+                $('#uploadBtn').prop('disabled', false).html('<i class="bi bi-cloud-upload"></i> Upload & Validate');
+                const err = xhr.responseJSON?.error || 'Upload failed';
+                $('#validationArea').html(`
+                    <div class="alert alert-danger mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> ${err}
+                    </div>
+                `);
+            }
+        });
+    });
+
+    $('#resetBtn').on('click', function() {
+        if (confirm('Reset all analysis data?')) {
+            $.post('/api/reset_analysis', function() {
+                location.reload();
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

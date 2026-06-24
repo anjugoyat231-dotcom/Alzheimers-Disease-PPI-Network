@@ -1,0 +1,261 @@
+:root {
+    --primary: #1a237e;
+    --primary-light: #283593;
+    --secondary: #3949ab;
+    --success: #198754;
+    --info: #0dcaf0;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --dark: #212529;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.navbar {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    z-index: 1030;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 0.5px;
+}
+
+.nav-link {
+    font-size: 0.88rem;
+    padding: 0.5rem 0.8rem !important;
+    transition: all 0.2s;
+    border-radius: 4px;
+    margin: 0 2px;
+}
+
+.nav-link:hover {
+    background-color: rgba(255,255,255,0.15);
+}
+
+.nav-link.active {
+    background-color: rgba(255,255,255,0.2);
+}
+
+.sidebar-card {
+    position: sticky;
+    top: 70px;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12) !important;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+    font-weight: 600;
+}
+
+.kpi-card {
+    transition: all 0.3s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-5px);
+}
+
+.display-4 {
+    font-size: 2.5rem;
+}
+
+.display-6 {
+    font-size: 2rem;
+}
+
+.table > thead {
+    background-color: #f0f0f0;
+}
+
+.table th {
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-top: none;
+}
+
+.table td {
+    font-size: 0.88rem;
+    vertical-align: middle;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.7em;
+}
+
+.btn {
+    border-radius: 6px;
+    font-weight: 500;
+    padding: 0.5rem 1.2rem;
+    transition: all 0.2s;
+}
+
+.btn-lg {
+    padding: 0.7rem 1.5rem;
+    font-size: 1rem;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-light);
+    border-color: var(--primary-light);
+}
+
+.footer {
+    border-top: 1px solid #dee2e6;
+}
+
+.progress-bar {
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--secondary);
+    box-shadow: 0 0 0 0.2rem rgba(57, 73, 171, 0.15);
+}
+
+.form-label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--dark);
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.tab-content {
+    min-height: 300px;
+}
+
+.nav-tabs .nav-link {
+    color: var(--dark);
+    font-weight: 500;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(26, 35, 126, 0.05);
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.alert-success {
+    background-color: #d1e7dd;
+    color: #0f5132;
+}
+
+.alert-info {
+    background-color: #cff4fc;
+    color: #055160;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #664d03;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #842029;
+}
+
+img.rounded {
+    border-radius: 10px !important;
+    border: 1px solid #dee2e6;
+    max-width: 100%;
+    height: auto;
+}
+
+.section-divider {
+    border: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--info), var(--primary));
+    margin: 2rem 0;
+}
+
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    .display-4 {
+        font-size: 2rem;
+    }
+    .display-6 {
+        font-size: 1.5rem;
+    }
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+.list-group-item {
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 0.6rem 0;
+    background: transparent;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.spinner-border {
+    margin-right: 5px;
+}

@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}DE Analysis - AD PPI Network Analysis{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-12">
+        <h2 class="text-primary"><i class="bi bi-bar-chart"></i> Differential Gene Expression Analysis</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Analysis Parameters</h5>
+            </div>
+            <div class="card-body">
+                <form id="deForm">
+                    <div class="mb-3">
+                        <label class="form-label">Case Group Identifier</label>
+                        <input type="text" class="form-control" name="case_group"
+                               id="case_group" value="AD" placeholder="e.g., AD, Disease">
+                        <small class="text-muted">String present in case sample names</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Control Group Identifier</label>
+                        <input type="text" class="form-control" name="control_group"
+                               id="control_group" value="Control" placeholder="e.g., Control, Normal">
+                        <small class="text-muted">String present in control sample names</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Log2 Fold Change Threshold</label>
+                        <input type="number" class="form-control" name="lfc_threshold"
+                               id="lfc_threshold" value="1.0" step="0.25" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Adjusted P-value Threshold</label>
+                        <input type="number" class="form-control" name="p_threshold"
+                               id="p_threshold" value="0.05" step="0.005" min="0" max="1">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="deBtn">
+                        <i class="bi bi-play-circle"></i> Run DE Analysis
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-clipboard-data"></i> Results Summary</h5>
+            </div>
+            <div class="card-body" id="summaryArea">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-bar-chart display-1"></i>
+                    <p class="mt-2">Configure parameters and run DE analysis</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-3 g-3">
+            <div class="col-md-6">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="bi bi-image"></i> Volcano Plot</h5>
+                    </div>
+                    <div class="card-body text-center" id="volcanoArea">
+                        <div class="text-muted py-3">
+                            <i class="bi bi-image display-4"></i>
+                            <p class="mt-2">Run analysis to generate volcano plot</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow h-100">
+                    <div class="card-header bg-warning text-white">
+                        <h5 class="mb-0"><i class="bi bi-table"></i> Top Genes</h5>
+                    </div>
+                    <div class="card-body" id="topGenesArea">
+                        <div class="text-muted py-3 text-center">
+                            <p>Top differentially expressed genes appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if session_data.de_analyzed %}
+        <div class="d-grid gap-2 mt-3">
+            <a href="{{ url_for('ppi_network') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-arrow-right"></i> Proceed to PPI Network Analysis
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#deForm').on('submit', function(e) {
+        e.preventDefault();
+        const data = {
+            case_group: $('#case_group').val(),
+            control_group: $('#control_group').val(),
+            lfc_threshold: parseFloat($('#lfc_threshold').val()),
+            p_threshold: parseFloat($('#p_threshold').val())
+        };
+        $('#deBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Running DE Analysis...');
+        $.ajax({
+            url: '/differential_expression',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(resp) {
+                $('#deBtn').prop('disabled', false).html('<i class="bi bi-play-circle"></i> Run DE Analysis');
+                if (resp.success) {
+                    const s = resp.summary;
+                    let html = '<h6 class="text-success"><i class="bi bi-check-circle"></i> DE Analysis Complete</h6>';
+                    html += '<div class="row g-2 mt-2">';
+                    html += '<div class="col-4"><div class="card bg-light text-center p-2"><small>Total Genes</small><strong>' + s.total_genes + '</strong></div></div>';
+                    html += '<div class="col-4"><div class="card bg-light text-center p-2"><small>Significant</small><strong class="text-success">' + s.significant_genes + '</strong></div></div>';
+                    html += '<div class="col-4"><div class="card bg-light text-center p-2"><small>Not Significant</small><strong class="text-muted">' + s.not_significant + '</strong></div></div>';
+                    html += '<div class="col-6 mt-2"><div class="card bg-danger bg-opacity-10 text-center p-2"><small>Upregulated</small><strong class="text-danger">' + s.upregulated + '</strong></div></div>';
+                    html += '<div class="col-6 mt-2"><div class="card bg-primary bg-opacity-10 text-center p-2"><small>Downregulated</small><strong class="text-primary">' + s.downregulated + '</strong></div></div>';
+                    html += '</div>';
+
+                    html += '<hr><p><strong>Parameters:</strong> |LFC| &ge; ' + s.lfc_threshold + ', adj.p &lt; ' + s.p_threshold + '</p>';
+                    $('#summaryArea').html(html);
+
+                    let genesHtml = '<table class="table table-sm table-hover"><thead><tr><th>Gene</th><th>Log2 FC</th><th>Adj. P</th><th>Regulation</th></tr></thead><tbody>';
+                    resp.top_genes.forEach(function(g) {
+                        const cls = g.regulation === 'Upregulated' ? 'text-danger' : (g.regulation === 'Downregulated' ? 'text-primary' : '');
+                        const icon = g.regulation === 'Upregulated' ? 'bi-arrow-up' : (g.regulation === 'Downregulated' ? 'bi-arrow-down' : 'bi-dash');
+                        genesHtml += '<tr><td><strong>' + g.gene + '</strong></td><td>' + g.log2_fc + '</td><td>' + g.p_adj + '</td><td class="' + cls + '"><i class="bi ' + icon + '"></i> ' + g.regulation + '</td></tr>';
+                    });
+                    genesHtml += '</tbody></table>';
+                    $('#topGenesArea').html(genesHtml);
+
+                    $('#volcanoArea').html('<div class="alert alert-success">Volcano plot generated! <a href="/static/images/volcano_plot.png" target="_blank">View full size</a></div><img src="/static/images/volcano_plot.png" class="img-fluid rounded" alt="Volcano Plot">');
+                } else {
+                    $('#summaryArea').html('<div class="alert alert-danger">' + resp.error + '</div>');
+                }
+            },
+            error: function(xhr) {
+                $('#deBtn').prop('disabled', false).html('<i class="bi bi-play-circle"></i> Run DE Analysis');
+                const err = xhr.responseJSON?.error || 'DE Analysis failed';
+                $('#summaryArea').html('<div class="alert alert-danger">' + err + '</div>');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Home - AD PPI Network Analysis{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12 text-center">
+        <h1 class="display-4 text-primary fw-bold">
+            <i class="bi bi-dna"></i> Alzheimer's Disease PPI Network Analysis
+        </h1>
+        <p class="lead text-muted">
+            AI-Assisted Protein-Protein Interaction Network Analysis and Hub Gene Identification
+        </p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-body">
+                <h4 class="card-title text-primary">
+                    <i class="bi bi-info-circle"></i> About Alzheimer's Disease
+                </h4>
+                <p class="card-text">
+                    Alzheimer's disease (AD) is a progressive neurodegenerative disorder and
+                    the most common cause of dementia, accounting for 60-80% of dementia cases
+                    worldwide. It is characterized by the accumulation of amyloid-beta plaques
+                    and hyperphosphorylated tau protein tangles in the brain, leading to
+                    progressive cognitive decline, memory loss, and functional impairment.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4 g-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-primary shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-upload display-6 text-primary"></i>
+                <h5 class="card-title mt-2">1. Data Upload</h5>
+                <p class="card-text small">Upload GEO gene expression datasets in CSV format</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-success shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-sliders display-6 text-success"></i>
+                <h5 class="card-title mt-2">2. Preprocessing</h5>
+                <p class="card-text small">Normalize, filter, and scale expression data</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-info shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-bar-chart display-6 text-info"></i>
+                <h5 class="card-title mt-2">3. DE Analysis</h5>
+                <p class="card-text small">Identify differentially expressed genes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-warning shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-diagram-3 display-6 text-warning"></i>
+                <h5 class="card-title mt-2">4. PPI Network</h5>
+                <p class="card-text small">Build and analyze protein interaction networks</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3 g-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-danger shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-star display-6 text-danger"></i>
+                <h5 class="card-title mt-2">5. Hub Genes</h5>
+                <p class="card-text small">Identify key regulatory hub genes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-secondary shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-collection display-6 text-secondary"></i>
+                <h5 class="card-title mt-2">6. GO Enrichment</h5>
+                <p class="card-text small">Gene Ontology functional analysis</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-dark shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-signpost-2 display-6 text-dark"></i>
+                <h5 class="card-title mt-2">7. KEGG Pathways</h5>
+                <p class="card-text small">Pathway enrichment analysis</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card h-100 border-primary shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-file-pdf display-6 text-primary"></i>
+                <h5 class="card-title mt-2">8. Report</h5>
+                <p class="card-text small">Generate comprehensive PDF report</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12 text-center">
+        {% if session_data.dataset_loaded %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg mx-2">
+            <i class="bi bi-speedometer2"></i> View Dashboard
+        </a>
+        <a href="{{ url_for('upload') }}" class="btn btn-outline-primary btn-lg mx-2">
+            <i class="bi bi-upload"></i> Manage Data
+        </a>
+        {% else %}
+        <a href="{{ url_for('upload') }}" class="btn btn-primary btn-lg">
+            <i class="bi bi-upload"></i> Get Started - Upload Dataset
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-key"></i> Key Genes in Alzheimer's Disease</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Gene</th>
+                                <th>Full Name</th>
+                                <th>Role in AD</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge bg-primary">APP</span></td>
+                                <td>Amyloid Beta Precursor Protein</td>
+                                <td>Source of amyloid-beta peptides; central to plaque formation</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-primary">PSEN1</span></td>
+                                <td>Presenilin 1</td>
+                                <td>Component of gamma-secretase complex; cleaves APP</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-primary">PSEN2</span></td>
+                                <td>Presenilin 2</td>
+                                <td>Similar to PSEN1; mutations cause early-onset AD</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-primary">APOE</span></td>
+                                <td>Apolipoprotein E</td>
+                                <td>Major genetic risk factor; APOE4 allele increases risk</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-primary">MAPT</span></td>
+                                <td>Microtubule-Associated Protein Tau</td>
+                                <td>Forms neurofibrillary tangles; hyperphosphorylated in AD</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-primary">BACE1</span></td>
+                                <td>Beta-Secretase 1</td>
+                                <td>Cleaves APP to initiate amyloid-beta production</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-primary">BDNF</span></td>
+                                <td>Brain-Derived Neurotrophic Factor</td>
+                                <td>Supports neuronal survival; reduced in AD</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-primary">GSK3B</span></td>
+                                <td>Glycogen Synthase Kinase 3 Beta</td>
+                                <td>Phosphorylates tau; involved in synaptic plasticity</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-6">
+        <div class="card shadow h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-clipboard-pulse"></i> Symptoms</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><i class="bi bi-chevron-right text-success"></i> Memory loss affecting daily life</li>
+                    <li class="list-group-item"><i class="bi bi-chevron-right text-success"></i> Difficulty planning or solving problems</li>
+                    <li class="list-group-item"><i class="bi bi-chevron-right text-success"></i> Confusion with time or place</li>
+                    <li class="list-group-item"><i class="bi bi-chevron-right text-success"></i> Trouble understanding visual images</li>
+                    <li class="list-group-item"><i class="bi bi-chevron-right text-success"></i> Problems with speaking or writing</li>
+                    <li class="list-group-item"><i class="bi bi-chevron-right text-success"></i> Decreased judgment and decision-making</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow h-100">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Biological Mechanisms</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><i class="bi bi-droplet text-info"></i> <strong>Amyloid Cascade:</strong> APP cleavage by BACE1 and gamma-secretase produces amyloid-beta oligomers</li>
+                    <li class="list-group-item"><i class="bi bi-droplet text-info"></i> <strong>Tau Hyperphosphorylation:</strong> GSK3B and CDK5 hyperphosphorylate tau, forming tangles</li>
+                    <li class="list-group-item"><i class="bi bi-droplet text-info"></i> <strong>Oxidative Stress:</strong> Mitochondrial dysfunction leads to ROS production</li>
+                    <li class="list-group-item"><i class="bi bi-droplet text-info"></i> <strong>Neuroinflammation:</strong> Activated microglia release pro-inflammatory cytokines</li>
+                    <li class="list-group-item"><i class="bi bi-droplet text-info"></i> <strong>Synaptic Dysfunction:</strong> Loss of synapses and impaired neurotransmission</li>
+                    <li class="list-group-item"><i class="bi bi-droplet text-info"></i> <strong>Apoptosis:</strong> Programmed cell death of neurons</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
