@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AI-Assisted PPI Network Analysis for Alzheimer's Disease
 
 A comprehensive bioinformatics platform for Alzheimer's Disease gene expression analysis, protein-protein interaction (PPI) network construction, hub gene identification, and enrichment analysis.
@@ -272,3 +273,6 @@ for Alzheimer's Disease. Bioinformatics Research Platform, 2024.
 For questions, suggestions, or contributions:
 - GitHub: [repository URL]
 - Email: [contact email]
+=======
+# Alzheimers-Disease-PPI-Network
+>>>>>>> 368ed93f70f616fe74d443040dc02be5be6c03f0
